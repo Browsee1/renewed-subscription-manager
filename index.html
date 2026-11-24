@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدير الاشتراكات الذكي | التطبيق المستقل</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script>
+        if (window.tailwind) tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>if (!window.tailwind) document.documentElement.classList.add("offline-styles");</script>
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .tab-active { background-color: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }
+        .hidden { display: none !important; }
+        dialog { border: 1px solid #dbe3ef; border-radius: 1.25rem; margin: auto; padding: 0; width: min(72rem, calc(100% - 1.5rem)); max-height: 90vh; color: #0f172a; background: white; box-shadow: 0 24px 70px #0f172a33; }
+        dialog::backdrop { background: #0f172a88; }
+        #subscription-modal { width: min(35rem, calc(100% - 1.5rem)); }
+        .detail-header, .service-card { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; padding: .9rem 1.1rem; }
+        .detail-header { border-bottom: 1px solid #e2e8f0; }
+        .detail-header h2, .service-card h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
+        .detail-actions { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+        .service-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; }
+        .service-card p { margin: .25rem 0 0; color: #475569; font-size: .78rem; }
+        .status { display: inline-block; border-radius: 1rem; font-size: .72rem; font-weight: 700; padding: .18rem .55rem; white-space: nowrap; }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-soon { background: #fef3c7; color: #92400e; }
+        .status-inactive { background: #ffe4e6; color: #9f1239; }
+        .status-pending { background: #e2e8f0; color: #334155; }
+        .record-scroll { overflow-x: auto; }
+        .record-scroll:focus-visible { outline: 2px solid #4f46e5; outline-offset: -2px; }
+        .records { border-collapse: collapse; text-align: start; width: 100%; min-width: 63rem; font-size: .8rem; }
+        .records th, .records td { border-bottom: 1px solid #e2e8f0; padding: .75rem .65rem; text-align: start; vertical-align: top; }
+        .records th { background: #f8fafc; white-space: nowrap; }
+        .records td { overflow-wrap: anywhere; }
+        .records td:nth-child(-n+4) { white-space: nowrap; }
+        .records a { color: #4338ca; text-decoration: underline; overflow-wrap: anywhere; }
+        .record-notes { white-space: pre-wrap; min-width: 7rem; }
+        .action { cursor: pointer; padding: .38rem .7rem; border-radius: .55rem; border: 1px solid #dbe3ef; background: #fff; color: #334155; font: inherit; font-size: .78rem; font-weight: 700; white-space: nowrap; }
+        .action-primary { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+        .action-danger { color: #9f1239; }
+        #storage-message:not([hidden]) { margin-bottom: 1rem; background: #fef3c7; color: #78350f; padding: .7rem 1rem; border-radius: .65rem; }
+        .offline-styles *, .offline-styles *::before, .offline-styles *::after { box-sizing: border-box; }
+        .offline-styles body.flex { display: block; margin: 0; color: #1e293b; }
+        .offline-styles main, .offline-styles body > header > div { max-width: 80rem; padding: .85rem 1rem; margin-inline: auto; }
+        .offline-styles body > header { background: #fff; border-bottom: 1px solid #e2e8f0; }
+        .offline-styles body > header > div.flex, .offline-styles body > header > div.flex > div { flex-wrap: wrap; }
+        .offline-styles body > .bg-indigo-900 { color: white; background: #312e81; padding: .65rem 1rem; }
+        .offline-styles .flex, .offline-styles nav { display: flex; align-items: center; gap: .65rem; }
+        .offline-styles .flex-wrap { flex-wrap: wrap; }
+        .offline-styles .justify-between { justify-content: space-between; }
+        .offline-styles nav { overflow: auto; }
+        .offline-styles nav button { white-space: nowrap; }
+        .offline-styles .grid { display: grid; gap: .7rem; }
+        .offline-styles .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .offline-styles .space-y-3 > * + *, .offline-styles .space-y-4 > * + *, .offline-styles .space-y-6 > * + * { margin-top: .75rem; }
+        .offline-styles section > .bg-white, .offline-styles .grid > .bg-white { background: white; padding: .8rem; border: 1px solid #e2e8f0; border-radius: .75rem; }
+        .offline-styles button:not(.action), .offline-styles input:not([type=file]), .offline-styles select, .offline-styles textarea { border: 1px solid #cbd5e1; border-radius: .55rem; background: #fff; color: #1e293b; font: inherit; padding: .4rem .6rem; }
+        .offline-styles button:is(.tab-active, .bg-brand-600, .bg-emerald-600) { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+        .offline-styles button { cursor: pointer; }
+        .offline-styles :is(input, select, textarea).w-full { width: 100%; }
+        .offline-styles #subscription-form { padding: 1rem; font-size: .86rem; }
+        .offline-styles #subscription-form label { display: block; margin-bottom: .2rem; font-weight: 700; }
+        .offline-styles #toast-container { position: fixed; z-index: 99; inset: auto auto 1rem 1rem; pointer-events: none; }
+        .offline-styles #toast-container > div { background: #0f172a; color: white; padding: .6rem .85rem; border-radius: .55rem; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- شريط إشعارات Toast -->
+    <div id="toast-container" class="fixed bottom-5 left-5 z-50 flex flex-col gap-3 max-w-md w-full px-4 pointer-events-none"></div>
+
+    <!-- شريط علوي خاص بالفتح المنفصل والتثبيت -->
+    <div class="bg-indigo-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-inner">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span class="font-bold">مدير الاشتراكات · حفظ محلي على هذا المتصفح</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="downloadStandaloneFile()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 shadow">
+                <i class="fa-solid fa-download"></i> تنزيل ملف البرنامج للجوال
+            </button>
+            <button onclick="openInNewTab()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح في نافذة مستقلة جديدة
+            </button>
+        </div>
+    </div>
+
+    <!-- الهيدر الرئيسي -->
+    <header class="bg-white/90 backdrop-blur sticky top-0 z-30 border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-600 to-purple-600 flex items-center justify-center text-white shadow-md">
+                    <i class="fa-solid fa-layer-group text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                        مدير الاشتراكات الذكي
+                        <span class="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">النسخة المستقلة</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">سجل الخدمات والاشتراكات والتجديدات</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="openSubscriptionModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>إضافة اشتراك جديد</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- شريط التنقل -->
+        <div class="max-w-7xl mx-auto px-4 border-t border-slate-100 bg-white">
+            <nav class="flex items-center gap-2 py-2 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-active px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-chart-pie"></i> لوحة التحكم
+                </button>
+                <button onclick="switchTab('subscriptions')" id="tab-btn-subscriptions" class="text-slate-600 hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-list-check"></i> سجل الاشتراكات <span id="total-subs-badge" class="bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button onclick="switchTab('notifications')" id="tab-btn-notifications" class="text-slate-600 hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-bell"></i> التنبيهات الذكية
+                </button>
+                <button onclick="switchTab('devices')" id="tab-btn-devices" class="text-slate-600 hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-mobile-screen-button"></i> الجوال والنسخ الاحتياطي
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+        <p id="storage-message" role="status" hidden></p>
+
+        <!-- لوحة التحكم -->
+        <section id="tab-dashboard" class="space-y-6">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
+                        <i class="fa-regular fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-500">التاريخ الحالي</p>
+                        <p id="current-date-display" class="text-xs font-bold text-slate-800"></p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <label for="display-currency" class="text-xs font-bold text-slate-600">عملة العرض:</label>
+                    <select id="display-currency" onchange="updateAllViews()" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-2.5 py-1.5 font-bold outline-none">
+                        <option value="USD">دولار (USD $)</option>
+                        <option value="SAR">ريال سعودي (SAR)</option>
+                        <option value="YER">ريال يمني (YER)</option>
+                        <option value="EUR">يورو (EUR €)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- بطاقات الإحصائيات -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">الاشتراكات الفعالة</span>
+                    <h3 id="stat-active" class="text-2xl font-extrabold text-slate-900 mt-3">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-amber-800">تنتهي خلال 7 أيام</span>
+                    <h3 id="stat-exp-7" class="text-2xl font-extrabold text-amber-600 mt-3">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-rose-800">اشتراكات منتهية</span>
+                    <h3 id="stat-expired" class="text-2xl font-extrabold text-rose-600 mt-3">0</h3>
+                </div>
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl shadow-md flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-300">التكلفة الشهرية التقديرية</span>
+                    <h3 id="stat-monthly-cost" class="text-xl font-extrabold text-white mt-3">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <h2 class="text-sm font-extrabold text-slate-900">الاشتراكات حسب قرب موعد الانتهاء</h2>
+                    <button onclick="switchTab('subscriptions')" class="text-xs font-bold text-brand-600">عرض الكل</button>
+                </div>
+                <div id="upcoming-list-container" class="divide-y divide-slate-100 overflow-y-auto max-h-[400px]"></div>
+            </div>
+        </section>
+
+        <!-- سجل الاشتراكات -->
+        <section id="tab-subscriptions" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <input type="text" id="search-input" oninput="renderSubscriptionsList()" placeholder="ابحث باسم الخدمة أو البريد أو الموقع..." class="flex-1 min-w-[200px] px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none">
+                <button onclick="openSubscriptionModal()" class="bg-brand-600 text-white px-4 py-2 rounded-xl text-xs font-bold">إضافة جديد</button>
+            </div>
+            <div id="subscriptions-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- التنبيهات -->
+        <section id="tab-notifications" class="hidden space-y-4">
+            <div class="bg-gradient-to-r from-brand-900 to-slate-900 text-white p-5 rounded-2xl shadow-md flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-extrabold">نظام التنبيهات والاستباقية</h2>
+                    <p class="text-[11px] text-slate-300 mt-1">يتم فحص مواعيد انتهاء الاشتراكات وإصدار تنبيهات مخصصة.</p>
+                </div>
+                <button onclick="triggerTestAlert()" class="bg-amber-400 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-bold">اختبار تنبيه الآن</button>
+            </div>
+            <div id="notifications-history-list" class="bg-white rounded-2xl border divide-y overflow-hidden"></div>
+        </section>
+
+        <!-- تثبيت الجوال والمزامنة -->
+        <section id="tab-devices" class="hidden space-y-4">
+            <div class="bg-white p-6 rounded-2xl border shadow-sm space-y-6">
+                <div>
+                    <h3 class="text-sm font-extrabold text-slate-900">تثبيت التطبيق على جوالك الأندرويد</h3>
+                    <p class="text-xs text-slate-500 mt-1">يمكن نقل سجل الاشتراكات إلى جهاز آخر باستخدام ملف النسخة الاحتياطية.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 border rounded-2xl space-y-2">
+                        <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-xs">1</span>
+                        <h4 class="text-xs font-extrabold text-slate-900">تنزيل ملف البرنامج</h4>
+                        <p class="text-[11px] text-slate-500">حمل ملف `index.html` على هاتفك أو كمبيوترك.</p>
+                        <button onclick="downloadStandaloneFile()" class="w-full bg-brand-600 hover:bg-brand-700 text-white py-2 rounded-xl text-xs font-bold">تحميل الملف الآن</button>
+                    </div>
+                    <div class="p-4 bg-slate-50 border rounded-2xl space-y-2">
+                        <span class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">2</span>
+                        <h4 class="text-xs font-extrabold text-slate-900">تثبيت التطبيق الشامل (APK)</h4>
+                        <p class="text-[11px] text-slate-500">استخدم موقع مجاني مثل WebIntoApp لرفع الملف واستلام تطبيق أندرويد APK.</p>
+                        <a href="https://www.webintoapp.com/html-to-app" target="_blank" class="block text-center w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold">فتح موقع التحويل المجاني</a>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t space-y-3">
+                    <p class="text-xs text-slate-600">لنقل السجلات بين النسختين أو بين الأجهزة، صدّر ملف JSON من النسخة التي تحتوي على بياناتك، ثم استورده هنا.</p>
+                    <h4 class="text-xs font-extrabold text-slate-900">النسخ الاحتياطي واستعادة البيانات</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="exportDataJSON()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-download text-brand-600"></i> تصدير البيانات (JSON)
+                        </button>
+                        <input type="file" id="backup-input" class="hidden" accept=".json,application/json">
+                        <button onclick="document.getElementById('backup-input').click()" class="action">استيراد البيانات (JSON)</button>
+                        <button onclick="resetToDemoData()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-rotate-right"></i> استعادة البيانات الافتراضية
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <dialog id="service-dialog" aria-labelledby="service-title">
+        <header class="detail-header">
+            <h2 id="service-title"></h2>
+            <div class="detail-actions">
+                <button type="button" class="action action-primary" id="add-renewal">إضافة تجديد</button>
+                <form method="dialog"><button class="action">إغلاق</button></form>
+            </div>
+        </header>
+        <div class="record-scroll" tabindex="0" role="region" aria-label="جدول الاشتراكات والتجديدات">
+            <table class="records">
+                <thead><tr>
+                    <th scope="col">تاريخ الاشتراك</th><th scope="col">الانتهاء</th>
+                    <th scope="col">المبلغ</th><th scope="col">الفترة</th>
+                    <th scope="col">البريد الإلكتروني</th><th scope="col">بطاقة الصراف</th>
+                    <th scope="col">موقع الاشتراك</th><th scope="col">الجهاز</th>
+                    <th scope="col">ملاحظات</th><th scope="col">الحالة</th><th scope="col">الإجراءات</th>
+                </tr></thead>
+                <tbody id="service-records"></tbody>
+            </table>
+        </div>
+    </dialog>
+
+    <dialog id="subscription-modal" aria-labelledby="subscription-title">
+        <header class="detail-header">
+            <h2 id="subscription-title">إضافة اشتراك</h2>
+            <button type="button" class="action" onclick="closeSubscriptionModal()">إغلاق</button>
+        </header>
+        <form id="subscription-form" onsubmit="saveSubscription(event)" class="p-5 space-y-3">
+            <div>
+                <label for="sub-name" class="block text-xs font-bold mb-1">اسم الخدمة أو التطبيق *</label>
+                <input id="sub-name" list="service-names" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                <datalist id="service-names"></datalist>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="sub-start-date" class="block text-xs font-bold mb-1">تاريخ الاشتراك أو التجديد *</label>
+                    <input type="date" id="sub-start-date" required onchange="autoCalculateEndDate()" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                </div>
+                <div>
+                    <label for="sub-cycle" class="block text-xs font-bold mb-1">فترة الاشتراك *</label>
+                    <select id="sub-cycle" onchange="autoCalculateEndDate()" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                        <option value="monthly">شهرية</option><option value="yearly">سنوية</option>
+                        <option value="weekly">أسبوعية</option>
+                        <option value="months">عدد من الشهور</option>
+                        <option value="years">عدد من السنوات</option>
+                        <option value="custom">تاريخ انتهاء محدد</option>
+                        <option value="lifetime">دفعة واحدة · بلا انتهاء</option>
+                    </select>
+                </div>
+                <div id="sub-duration-field" class="hidden">
+                    <label id="sub-duration-label" for="sub-duration" class="block text-xs font-bold mb-1">العدد *</label>
+                    <input type="number" id="sub-duration" min="1" step="1" disabled oninput="autoCalculateEndDate()" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                </div>
+                <div id="sub-end-date-field">
+                    <label for="sub-end-date" class="block text-xs font-bold mb-1">تاريخ الانتهاء *</label>
+                    <input type="date" id="sub-end-date" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                </div>
+                <div>
+                    <label for="sub-amount" class="block text-xs font-bold mb-1">المبلغ *</label>
+                    <input type="number" id="sub-amount" min="0" step="0.01" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                </div>
+                <div>
+                    <label for="sub-currency" class="block text-xs font-bold mb-1">العملة *</label>
+                    <select id="sub-currency" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                        <option value="USD">دولار (USD)</option><option value="SAR">ريال سعودي (SAR)</option>
+                        <option value="YER">ريال يمني (YER)</option><option value="EUR">يورو (EUR)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sub-device" class="block text-xs font-bold mb-1">الجهاز المستخدم</label>
+                    <input id="sub-device" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+                </div>
+            </div>
+            <div>
+                <label for="sub-account" class="block text-xs font-bold mb-1">بريد الاشتراك أو التجديد *</label>
+                <input type="email" id="sub-account" dir="ltr" required class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+            </div>
+            <div>
+                <label for="sub-card" class="block text-xs font-bold mb-1">بطاقة الصراف</label>
+                <input id="sub-card" placeholder="اسم البطاقة أو آخر 4 أرقام" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+            </div>
+            <div>
+                <label for="sub-site" class="block text-xs font-bold mb-1">عنوان الموقع الذي تم الاشتراك من خلاله</label>
+                <input id="sub-site" dir="ltr" placeholder="https://example.com" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none">
+            </div>
+            <div>
+                <label for="sub-notes" class="block text-xs font-bold mb-1">ملاحظات</label>
+                <textarea id="sub-notes" rows="2" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs outline-none resize-y"></textarea>
+            </div>
+            <div class="detail-actions">
+                <button type="submit" class="action action-primary" id="subscription-submit">حفظ الاشتراك</button>
+                <button type="button" class="action" onclick="closeSubscriptionModal()">إلغاء</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script>
+        const LEGACY_KEY = 'smart_subs_data';
+        const STORAGE_KEY = 'smart_subs_records_v2';
+        const DEMO_RECORDS = [
+            { id: '1', name: 'ChatGPT Plus', startDate: '2026-03-01', endDate: '2026-04-01', amount: 20, currency: 'USD', cycle: 'monthly', device: 'جوال أندرويد', account: 'user@gmail.com' },
+            { id: '2', name: 'YouTube Premium', startDate: '2026-03-10', endDate: '2026-04-10', amount: 26, currency: 'SAR', cycle: 'monthly', device: 'جوال أندرويد', account: 'user@gmail.com' }
+        ];
+        const EXCHANGE_RATES = { USD: 1, SAR: 0.2666, YER: 0.0019, EUR: 1.08 };
+        const CYCLE_LABELS = {
+            monthly: 'شهرية', yearly: 'سنوية', weekly: 'أسبوعية', custom: 'مخصصة',
+            months: 'بالشهور', years: 'بالسنوات', lifetime: 'دفعة واحدة · بلا انتهاء'
+        };
+        const DURATION_LABELS = { months: 'عدد الشهور', years: 'عدد السنوات' };
+        const DAY = 86_400_000;
+        const el = id => document.getElementById(id);
+        const serviceDialog = el('service-dialog');
+        const subscriptionModal = el('subscription-modal');
+        const form = el('subscription-form');
+        let selectedService = '';
+        let renewalService = '';
+        let editingId = null;
+        let subscriptions = [];
+        let notificationLogs = [];
+
+        function storageMessage(message = '') {
+            el('storage-message').textContent = message;
+            el('storage-message').hidden = !message;
+        }
+
+        function normalizeRecords(records) {
+            if (!Array.isArray(records) || records.some(record =>
+                !record || typeof record.name !== 'string' || !record.name.trim())) {
+                throw new Error('Invalid subscription backup');
+            }
+            const ids = new Set();
+            return records.map(record => {
+                let id = String(record.id ?? '');
+                if (!id || ids.has(id)) id = crypto.randomUUID();
+                ids.add(id);
+                return {
+                    ...record, id, name: record.name.trim(),
+                    account: String(record.account ?? ''),
+                    device: String(record.device ?? ''),
+                    notes: String(record.notes ?? ''),
+                    card: cardReference(record.card),
+                    site: String(record.site ?? '')
+                };
+            });
+        }
+
+        function readRecords() {
+            const saved = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY);
+            return saved === null ? structuredClone(DEMO_RECORDS) : normalizeRecords(JSON.parse(saved));
+        }
+
+        function reloadRecords() {
+            try {
+                subscriptions = readRecords();
+                storageMessage();
+            } catch {
+                storageMessage('تعذّرت قراءة السجلات المحفوظة في هذا المتصفح. يمكنك استيراد نسخة احتياطية من تبويب الجوال والنسخ الاحتياطي.');
+            }
+            updateAllViews();
+        }
+
+        function writeRecords(records) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            subscriptions = records;
+            storageMessage();
+        }
+
+        function changeRecords(change) {
+            try {
+                writeRecords(change(readRecords()));
+                return true;
+            } catch {
+                showToast('تعذّر حفظ التغيير. تحقق من سماح المتصفح بحفظ البيانات المحلية.');
+                return false;
+            }
+        }
+
+        function dateString(date) {
+            return [
+                String(date.getFullYear()).padStart(4, '0'),
+                String(date.getMonth() + 1).padStart(2, '0'),
+                String(date.getDate()).padStart(2, '0')
+            ].join('-');
+        }
+
+        function dayNumber(value) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(value ?? '')) return NaN;
+            const date = new Date(value + 'T00:00:00Z');
+            if (!Number.isFinite(+date) || date.toISOString().slice(0, 10) !== value) return NaN;
+            return +date / DAY;
+        }
+
+        function recordStatus(record) {
+            const today = dayNumber(dateString(new Date()));
+            const start = dayNumber(record.startDate);
+            if (record.cycle === 'lifetime') {
+                if (!Number.isFinite(start)) return { type: 'unknown' };
+                if (start > today) return { type: 'pending', days: start - today };
+                return { type: 'active', days: Infinity };
+            }
+            const end = dayNumber(record.endDate);
+            if (!Number.isFinite(end) || (Number.isFinite(start) && end < start)) return { type: 'unknown' };
+            if (start > today) return { type: 'pending', days: start - today };
+            return end < today ? { type: 'inactive' } : { type: 'active', days: end - today };
+        }
+
+        function statusBadge(status) {
+            if (status.type === 'unknown') return '<span class="status status-pending">التاريخ غير محدد</span>';
+            if (status.type === 'pending') return '<span class="status status-pending">غير نشط · لم يبدأ</span>';
+            if (status.type === 'inactive') return '<span class="status status-inactive">غير نشط · منتهٍ</span>';
+            if (status.days === Infinity) return '<span class="status status-active">نشط · بلا انتهاء</span>';
+            const text = status.days === 0 ? 'ينتهي اليوم' : `المتبقي بالأيام: ${status.days}`;
+            const color = status.days <= 7 ? 'soon' : 'active';
+            return `<span class="status status-${color}">نشط · ${text}</span>`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
+        function cardReference(value) {
+            const label = String(value ?? '').trim();
+            const digits = label.replace(/[^0-9٠-٩۰-۹]/g, '');
+            return digits.length >= 12 ? '•••• ' + digits.slice(-4) : label;
+        }
+
+        function siteUrl(value) {
+            if (!value) return null;
+            try {
+                const address = /^[a-z][a-z0-9+.-]*:/i.test(value) && !/^[\w.-]+:\d/.test(value)
+                    ? value : 'https://' + value;
+                const url = new URL(address);
+                if (['http:', 'https:'].includes(url.protocol) && url.hostname.includes('.') &&
+                    !url.username && !url.password) return url;
+            } catch {
+                return null;
+            }
+            return null;
+        }
+
+        function normalizedText(value) {
+            return String(value ?? '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLowerCase();
+        }
+
+        function serviceKey(name) {
+            const site = siteUrl(name);
+            if (site) {
+                const path = site.pathname.replace(/\/+$/, '');
+                return site.hostname.replace(/^www\./, '') + (site.port ? ':' + site.port : '') + path;
+            }
+            return normalizedText(name);
+        }
+
+        function groupedServices(records = subscriptions) {
+            const groups = new Map();
+            for (const record of records) {
+                const key = serviceKey(record.name);
+                if (!groups.has(key)) groups.set(key, { key, name: record.name, records: [] });
+                groups.get(key).records.push(record);
+            }
+            for (const group of groups.values()) {
+                group.records.sort((a, b) => String(b.startDate ?? '').localeCompare(String(a.startDate ?? '')));
+                group.active = group.records.map(recordStatus).filter(status => status.type === 'active');
+                const first = group.active.reduce((nearest, status) =>
+                    !nearest || status.days < nearest.days ? status : nearest, null);
+                group.status = first ?? recordStatus(group.records[0]);
+            }
+            return groups;
+        }
+
+        function displayValue(value) {
+            return value === undefined || value === null || value === '' ? '—' : escapeHtml(value);
+        }
+
+        function durationText(record) {
+            if (Object.hasOwn(DURATION_LABELS, record.cycle) && Number.isInteger(record.duration)) {
+                return DURATION_LABELS[record.cycle] + ': ' + record.duration;
+            }
+            return Object.hasOwn(CYCLE_LABELS, record.cycle) ? CYCLE_LABELS[record.cycle] : record.cycle;
+        }
+
+        function siteCell(value) {
+            const url = siteUrl(value);
+            if (!url) return displayValue(value);
+            return `<a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer" dir="ltr">${escapeHtml(value)}</a>`;
+        }
+
+        function renderSubscriptionsList() {
+            const query = normalizedText(el('search-input').value);
+            const groups = [...groupedServices().values()].filter(group => group.records.some(record =>
+                [record.name, record.account, record.site, record.notes].some(value => normalizedText(value).includes(query))));
+            el('subscriptions-grid').innerHTML = groups.map(group => `
+                <article class="service-card">
+                    <div>
+                        <h3>${escapeHtml(group.name)}</h3>
+                        <p>${group.records.length} سجل · ${group.active.length} نشط</p>
+                    </div>
+                    <div class="detail-actions">
+                        ${statusBadge(group.status)}
+                        <button type="button" class="action" data-service="${escapeHtml(group.key)}">عرض السجل</button>
+                    </div>
+                </article>
+            `).join('') || '<p class="col-span-full text-sm text-slate-500">لا توجد خدمات مطابقة.</p>';
+        }
+
+        function renderServiceDialog() {
+            if (!serviceDialog.open) return;
+            const group = groupedServices().get(selectedService);
+            if (!group) {
+                serviceDialog.close();
+                return;
+            }
+            el('service-title').textContent = group.name;
+            el('service-records').innerHTML = group.records.map(record => `
+                <tr>
+                    <td dir="ltr">${displayValue(record.startDate)}</td>
+                    <td dir="ltr">${displayValue(record.cycle === 'lifetime' ? null : record.endDate)}</td>
+                    <td dir="ltr">${displayValue(record.amount)} ${escapeHtml(record.currency)}</td>
+                    <td>${displayValue(durationText(record))}</td>
+                    <td dir="ltr">${displayValue(record.account)}</td>
+                    <td>${displayValue(record.card)}</td>
+                    <td>${siteCell(record.site)}</td>
+                    <td>${displayValue(record.device)}</td>
+                    <td class="record-notes">${displayValue(record.notes)}</td>
+                    <td>${statusBadge(recordStatus(record))}</td>
+                    <td><div class="detail-actions">
+                        <button type="button" class="action" data-edit="${escapeHtml(record.id)}">تعديل</button>
+                        <button type="button" class="action action-danger" data-delete="${escapeHtml(record.id)}">حذف</button>
+                    </div></td>
+                </tr>
+            `).join('');
+        }
+
+        function openService(key) {
+            selectedService = key;
+            if (!serviceDialog.open) serviceDialog.showModal();
+            renderServiceDialog();
+        }
+
+        function updateAllViews() {
+            const currency = el('display-currency').value;
+            const entries = subscriptions.map(record => ({ record, status: recordStatus(record) }));
+            const active = entries.filter(entry => entry.status.type === 'active');
+            const upcoming = active.filter(entry => Number.isFinite(entry.status.days))
+                .sort((a, b) => a.status.days - b.status.days);
+            const monthly = upcoming.reduce((sum, { record }) => {
+                const inUSD = Number(record.amount) * (EXCHANGE_RATES[record.currency] || 1);
+                if (!Number.isFinite(inUSD)) return sum;
+                const factors = { yearly: 1 / 12, weekly: 52 / 12, monthly: 1 };
+                if (Number.isInteger(record.duration) && record.duration > 0) {
+                    if (record.cycle === 'months') return sum + inUSD / record.duration;
+                    if (record.cycle === 'years') return sum + inUSD / (12 * record.duration);
+                }
+                const factor = Object.hasOwn(factors, record.cycle) ? factors[record.cycle] : undefined;
+                const length = dayNumber(record.endDate) - dayNumber(record.startDate);
+                return sum + inUSD * (factor ?? (length > 0 ? 30 / length : 1));
+            }, 0);
+            el('stat-active').textContent = active.length;
+            el('stat-exp-7').textContent = upcoming.filter(entry => entry.status.days <= 7).length;
+            el('stat-expired').textContent = entries.filter(entry => entry.status.type === 'inactive').length;
+            el('stat-monthly-cost').textContent = `${(monthly / EXCHANGE_RATES[currency]).toFixed(1)} ${currency}`;
+            el('total-subs-badge').textContent = groupedServices().size;
+            el('current-date-display').textContent = new Date().toLocaleDateString('ar', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', calendar: 'gregory'
+            });
+            el('upcoming-list-container').innerHTML = upcoming.map(({ record, status }) => `
+                <div class="p-3.5 flex items-center justify-between gap-3 text-xs">
+                    <div>
+                        <button type="button" class="action" data-service="${escapeHtml(serviceKey(record.name))}">${escapeHtml(record.name)}</button>
+                        <p class="text-slate-500 mt-1">${escapeHtml(record.account)} · ${escapeHtml(record.endDate)}</p>
+                    </div>
+                    ${statusBadge(status)}
+                </div>
+            `).join('') || '<p class="p-4 text-center text-sm text-slate-500">لا توجد اشتراكات نشطة لها تاريخ انتهاء.</p>';
+            renderSubscriptionsList();
+            renderServiceDialog();
+            renderNotificationsLog();
+        }
+
+        function openSubscriptionModal(group = null, record = null) {
+            form.reset();
+            renewalService = group?.key ?? '';
+            editingId = record?.id ?? null;
+            const previous = record ?? group?.records[0];
+            el('subscription-title').textContent = record ? 'تعديل السجل' : group ? 'إضافة تجديد لخدمة ' + group.name : 'إضافة اشتراك';
+            el('subscription-submit').textContent = record ? 'حفظ التعديلات' : group ? 'حفظ التجديد' : 'حفظ الاشتراك';
+            el('service-names').innerHTML = [...groupedServices().values()]
+                .map(service => `<option value="${escapeHtml(service.name)}"></option>`).join('');
+            el('sub-name').value = group?.name ?? '';
+            el('sub-name').readOnly = Boolean(group);
+            el('sub-start-date').value = record?.startDate ?? dateString(new Date());
+            el('sub-cycle').value = Object.hasOwn(CYCLE_LABELS, previous?.cycle) ? previous.cycle : 'monthly';
+            el('sub-duration').value = previous?.duration ?? (previous?.cycle === 'years' ? 2 : 1);
+            el('sub-end-date').value = record?.endDate ?? '';
+            el('sub-end-date').min = el('sub-start-date').value;
+            el('sub-amount').value = previous?.amount ?? '';
+            el('sub-currency').value = Object.hasOwn(EXCHANGE_RATES, previous?.currency) ? previous.currency : 'USD';
+            el('sub-device').value = previous?.device ?? '';
+            el('sub-account').value = previous?.account ?? '';
+            el('sub-card').value = previous?.card ?? '';
+            el('sub-site').value = previous?.site ?? '';
+            el('sub-notes').value = record?.notes ?? '';
+            el('sub-name').setCustomValidity('');
+            el('sub-end-date').setCustomValidity('');
+            el('sub-site').setCustomValidity('');
+            autoCalculateEndDate(Boolean(record));
+            subscriptionModal.showModal();
+        }
+
+        function closeSubscriptionModal() {
+            subscriptionModal.close();
+        }
+
+        function autoCalculateEndDate(preserveDate = false) {
+            const start = el('sub-start-date').value;
+            const cycle = el('sub-cycle').value;
+            const count = el('sub-duration');
+            const output = el('sub-end-date');
+            const hasCount = Object.hasOwn(DURATION_LABELS, cycle);
+            const noExpiry = cycle === 'lifetime';
+            el('sub-duration-field').classList.toggle('hidden', !hasCount);
+            el('sub-duration-label').textContent = hasCount ? DURATION_LABELS[cycle] + ' *' : 'العدد *';
+            count.disabled = !hasCount;
+            count.required = hasCount;
+            count.setCustomValidity('');
+            el('sub-end-date-field').classList.toggle('hidden', noExpiry);
+            output.disabled = noExpiry;
+            output.required = !noExpiry;
+            output.min = start;
+            output.setCustomValidity('');
+            if (noExpiry) {
+                output.value = '';
+                return;
+            }
+            if (preserveDate || cycle === 'custom') return;
+            if (!Number.isFinite(dayNumber(start)) || (hasCount && !count.validity.valid)) {
+                output.value = '';
+                return;
+            }
+            const date = new Date(start + 'T00:00:00Z');
+            if (cycle === 'weekly') {
+                date.setUTCDate(date.getUTCDate() + 7);
+            } else {
+                const day = date.getUTCDate();
+                date.setUTCDate(1);
+                const months = cycle === 'months' ? count.valueAsNumber
+                    : cycle === 'years' ? count.valueAsNumber * 12
+                    : cycle === 'yearly' ? 12 : 1;
+                date.setUTCMonth(date.getUTCMonth() + months);
+                if (!Number.isFinite(+date) || date.getUTCFullYear() > 9999) {
+                    output.value = '';
+                    if (hasCount) count.setCustomValidity('اختر مدة يقع تاريخ انتهائها ضمن نطاق التاريخ المدعوم.');
+                    else output.setCustomValidity('اختر تاريخ انتهاء ضمن نطاق التاريخ المدعوم.');
+                    return;
+                }
+                const lastDay = new Date(date);
+                lastDay.setUTCMonth(lastDay.getUTCMonth() + 1, 0);
+                date.setUTCDate(Math.min(day, lastDay.getUTCDate()));
+            }
+            output.value = date.getUTCFullYear() <= 9999 ? date.toISOString().slice(0, 10) : '';
+        }
+
+        function saveSubscription(event) {
+            event.preventDefault();
+            const name = el('sub-name').value.trim();
+            const startDate = el('sub-start-date').value;
+            const cycle = el('sub-cycle').value;
+            const endDate = cycle === 'lifetime' ? null : el('sub-end-date').value;
+            const site = el('sub-site').value.trim();
+            el('sub-name').setCustomValidity(name ? '' : 'أدخل اسم الخدمة.');
+            el('sub-start-date').setCustomValidity(Number.isFinite(dayNumber(startDate)) ? '' : 'أدخل تاريخ اشتراك صالحاً.');
+            el('sub-end-date').setCustomValidity(endDate === null || dayNumber(endDate) >= dayNumber(startDate) ? '' : 'اختر تاريخ انتهاء يوافق تاريخ الاشتراك أو يأتي بعده.');
+            el('sub-site').setCustomValidity(!site || siteUrl(site) ? '' : 'أدخل عنوان الموقع، مثل example.com.');
+            if (!form.reportValidity()) return;
+            const key = renewalService || serviceKey(name);
+            const fields = {
+                startDate, endDate, site,
+                amount: el('sub-amount').valueAsNumber,
+                currency: el('sub-currency').value,
+                cycle,
+                duration: Object.hasOwn(DURATION_LABELS, cycle) ? el('sub-duration').valueAsNumber : undefined,
+                device: el('sub-device').value.trim(),
+                account: el('sub-account').value.trim(),
+                card: cardReference(el('sub-card').value),
+                notes: el('sub-notes').value.trim()
+            };
+            const saved = changeRecords(current => {
+                if (editingId !== null) {
+                    if (!current.some(record => record.id === editingId)) throw new Error('Record removed');
+                    return current.map(record => record.id === editingId ? { ...record, ...fields } : record);
+                }
+                const existing = current.find(record => serviceKey(record.name) === key);
+                return [...current, { id: crypto.randomUUID(), name: existing?.name ?? name, ...fields }];
+            });
+            if (!saved) return;
+            closeSubscriptionModal();
+            switchTab('subscriptions');
+            el('search-input').value = '';
+            updateAllViews();
+            openService(key);
+            showToast(editingId !== null ? 'تم حفظ التعديل.' : 'تم حفظ السجل.');
+        }
+
+        function deleteSub(id) {
+            if (!window.confirm('حذف هذا السجل من الخدمة؟')) return;
+            if (!changeRecords(records => records.filter(record => record.id !== id))) return;
+            updateAllViews();
+            showToast('تم حذف السجل.');
+        }
+
+        function renderNotificationsLog() {
+            const alerts = subscriptions.flatMap(record => {
+                const status = recordStatus(record);
+                if (status.type !== 'active' || status.days > 7) return [];
+                const expiry = status.days === 0 ? 'ينتهي اليوم' : `متبقٍ ${status.days} يوم`;
+                return [{ message: `${record.name} · ${expiry}`, date: record.endDate }];
+            });
+            el('notifications-history-list').innerHTML = [...notificationLogs, ...alerts].map(log => `
+                <div class="p-3.5 text-xs flex justify-between items-center">
+                    <span>${escapeHtml(log.message)}</span><span>${escapeHtml(log.date)}</span>
+                </div>
+            `).join('') || '<p class="p-4 text-center text-xs text-slate-500">لا توجد تنبيهات حالياً.</p>';
+        }
+
+        function triggerTestAlert() {
+            notificationLogs.unshift({ message: 'تنبيه اختباري: اشتراك منصة رقمية سينتهي خلال 3 أيام.', date: 'الآن' });
+            renderNotificationsLog();
+            showToast('تم إصدار التنبيه التجريبي.');
+        }
+
+        function download(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function exportDataJSON() {
+            download(new Blob([JSON.stringify(subscriptions, null, 2)], { type: 'application/json' }), 'my-subscriptions-backup.json');
+            showToast('تم تصدير النسخة الاحتياطية.');
+        }
+
+        function signature(record) {
+            const { id, ...fields } = record;
+            return JSON.stringify(fields, Object.keys(fields).sort());
+        }
+
+        async function importBackup(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            let imported;
+            try {
+                imported = normalizeRecords(JSON.parse(await file.text()));
+            } catch {
+                showToast('الملف لا يحتوي على نسخة احتياطية صالحة للاشتراكات.');
+                return;
+            }
+            let current;
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_KEY);
+                current = saved === null ? [] : normalizeRecords(JSON.parse(saved));
+            } catch {
+                if (!window.confirm('تعذّرت قراءة السجلات المحلية. هل تريد استعادتها من هذه النسخة؟')) return;
+                current = [];
+            }
+            const byId = new Map(current.map(record => [record.id, record]));
+            const signatures = new Set(current.map(signature));
+            let importedCount = 0;
+            for (const record of imported) {
+                const existing = byId.get(record.id);
+                if (existing && signatures.has(signature(record))) continue;
+                const id = existing ? crypto.randomUUID() : record.id;
+                byId.set(id, { ...record, id });
+                signatures.add(signature(record));
+                importedCount++;
+            }
+            try {
+                writeRecords([...byId.values()]);
+            } catch {
+                showToast('تعذّر حفظ السجلات المستوردة في المتصفح.');
+                return;
+            }
+            updateAllViews();
+            switchTab('subscriptions');
+            showToast(importedCount ? `تم استيراد ${importedCount} سجل.` : 'كل سجلات هذه النسخة موجودة بالفعل.');
+        }
+
+        function resetToDemoData() {
+            if (!window.confirm('استبدال السجلات الحالية بالبيانات التجريبية؟')) return;
+            if (changeRecords(() => structuredClone(DEMO_RECORDS))) updateAllViews();
+        }
+
+        async function downloadStandaloneFile() {
+            try {
+                const response = await fetch(location.href);
+                if (!response.ok) throw new Error('File unavailable');
+                download(await response.blob(), 'smart_subscriptions_app.html');
+            } catch {
+                const html = document.documentElement.cloneNode(true);
+                [
+                    'toast-container', 'subscriptions-grid', 'service-title', 'service-records',
+                    'notifications-history-list', 'upcoming-list-container', 'service-names', 'storage-message'
+                ].forEach(id => html.querySelector('#' + id).replaceChildren());
+                html.querySelectorAll('dialog[open]').forEach(dialog => dialog.removeAttribute('open'));
+                download(new Blob(['<!DOCTYPE html>\n', html.outerHTML], { type: 'text/html;charset=utf-8' }), 'smart_subscriptions_app.html');
+            }
+        }
+
+        function openInNewTab() {
+            window.open(location.href, '_blank', 'noopener');
+        }
+
+        function switchTab(id) {
+            ['dashboard', 'subscriptions', 'notifications', 'devices'].forEach(tab => {
+                el('tab-' + tab).classList.toggle('hidden', tab !== id);
+                el('tab-btn-' + tab).classList.toggle('tab-active', tab === id);
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'bg-slate-900 text-white p-3 rounded-xl text-xs font-bold shadow-xl';
+            toast.setAttribute('role', 'status');
+            toast.textContent = message;
+            el('toast-container').appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        for (const id of ['subscriptions-grid', 'upcoming-list-container']) {
+            el(id).addEventListener('click', event => {
+                const button = event.target.closest('[data-service]');
+                if (button) openService(button.dataset.service);
+            });
+        }
+        el('add-renewal').addEventListener('click', () => {
+            const group = groupedServices().get(selectedService);
+            if (group) openSubscriptionModal(group);
+        });
+        el('service-records').addEventListener('click', event => {
+            const button = event.target.closest('button');
+            if (!button) return;
+            if (button.dataset.delete) deleteSub(button.dataset.delete);
+            if (button.dataset.edit) {
+                const group = groupedServices().get(selectedService);
+                const record = group?.records.find(entry => entry.id === button.dataset.edit);
+                if (record) openSubscriptionModal(group, record);
+            }
+        });
+        for (const id of ['sub-name', 'sub-start-date', 'sub-end-date', 'sub-site']) {
+            el(id).addEventListener('input', () => {
+                el(id).setCustomValidity('');
+                if (id === 'sub-start-date') el('sub-end-date').setCustomValidity('');
+            });
+        }
+        el('backup-input').addEventListener('change', importBackup);
+        window.addEventListener('storage', event => {
+            if ([null, STORAGE_KEY, LEGACY_KEY].includes(event.key)) reloadRecords();
+        });
+        window.addEventListener('focus', updateAllViews);
+        setInterval(updateAllViews, 60_000);
+        switchTab('dashboard');
+        reloadRecords();
+
+    </script>
+</body>
+</html>
